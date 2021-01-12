@@ -64,6 +64,7 @@ int main()
     //SHADERS ---------------------------------------
     GLuint sceneProgram = createShaderProgram("shaders/scene.vert", "shaders/scene.frag");
     GLuint lightProgram = createShaderProgram("shaders/light.vert", "shaders/light.frag");
+    GLuint lightFboProgram = createShaderProgram("shaders/framebuffer.vert", "shaders/framebuffer.frag");
     glUseProgram(lightProgram);
 
     std::map<std::string, GLint> locations;
@@ -99,6 +100,7 @@ int main()
     //-----------------------------------------------
 
     //LIGHT VAO STUFF -------------------------------
+    //A quad to cover entire screen
     float light_verts[] = {
         //pos       
         -1.0f, -1.0f,
@@ -139,6 +141,49 @@ int main()
     stbi_image_free(data);
     //-----------------------------------------------
 
+    //FRAMEBUFFER STUFF -----------------------------
+    GLuint fbo, light_tex;
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    //color attachment
+    glGenTextures(1, &light_tex);
+    glBindTexture(GL_TEXTURE_2D, light_tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w_width, w_height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, light_tex, 0);
+    //validate
+    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "Framebuffer failed." << std::endl;
+        return -1;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    float light_fbo_verts[] = {
+        //pos           //uv 
+        -1.0f, -1.0f,   0.0f, 0.0f,
+         1.0f, -1.0f,   1.0f, 0.0f,
+        -1.0f,  1.0f,   0.0f, 1.0f,
+        -1.0f,  1.0f,   0.0f, 1.0f,
+         1.0f, -1.0f,   1.0f, 0.0f,
+         1.0f,  1.0f,   1.0f, 1.0f,
+    };
+
+    GLuint light_fbo_vao, light_fbo_vbo;
+    glGenVertexArrays(1, &light_fbo_vao);
+    glBindVertexArray(light_fbo_vao);
+
+    glGenBuffers(1, &light_fbo_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, light_fbo_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(light_fbo_verts), light_fbo_verts, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0); //pos
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(sizeof(float)*2));
+    glEnableVertexAttribArray(1); //uv
+
+    //-----------------------------------------------
+
     bool show_demo_window = true;
 	while (!glfwWindowShouldClose(window))
 	{
@@ -149,7 +194,6 @@ int main()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        
         //IMGUI FRAME-----------------------------------------
         static int light_x = 450, light_y = 450, light_radius = 100;
         ImGui::Begin("Light params");                          // Create a window called "Hello, world!" and append into it.
@@ -161,12 +205,12 @@ int main()
         ImGui::End();
         //----------------------------------------------------
 
+        //Draw into the framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glClearColor(0, 0, 0, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-        //glUseProgram(sceneProgram);
-        //glBindVertexArray(scene_vao);
-        //glBindTexture(GL_TEXTURE_2D, stone_tex);
+        //LIGHT 1
         glBindVertexArray(light_vao);
         glUseProgram(lightProgram);
         glUniform4f(locations["lightColor"], 0.0, 0.0, 1.0, 1);
@@ -174,12 +218,22 @@ int main()
         glUniform1i(locations["light_radius"], light_radius);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
+        //LIGHT 2
         glUniform4f(locations["lightColor"], 1.0, 0.0, 0.0, 1);
-        glUniform2f(locations["lightPos"], 300, 300);
+        glUniform2f(locations["lightPos"], 300, 300); 
         glDrawArrays(GL_TRIANGLES, 0, 6);
-        //glUniform4f(locations["lightColor"], 0.0, 0.0, 1.0, 0.5);
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
 
+        //Draw the default framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glBindVertexArray(light_fbo_vao);
+        glUseProgram(lightFboProgram);
+        glBindTexture(GL_TEXTURE_2D, light_tex);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        //Render to the screen
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		glfwSwapBuffers(window);
