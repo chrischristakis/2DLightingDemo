@@ -161,8 +161,6 @@
     <Image Include="assets\stone.jpg" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\framebuffer.frag" />
-    <None Include="shaders\framebuffer.vert" />
     <None Include="shaders\light.frag" />
     <None Include="shaders\light.vert" />
     <None Include="shaders\scene.frag" />

@@ -17,6 +17,14 @@
 
 static int w_width = 900, w_height = 900;
 
+//Maybe the current implementation isnt the best, the colours don't blend correctly together, it doesnt look natural.
+//But for 99% of things, this will do just fine I think. Especially if the effect is subtle.
+//Next time, maybe try to add the RGB values together (Red ontop of cyan or vice versa will produce white light.)
+//And use opacity as a means to make stacking lights ontop of eachother brighter. THis will be more realistic, but
+//looks like each light will need its own render pass in order to be added together with the previous light. This is all
+//complicated if shadows are added. If there are no shadows, then clearly it would be easy to add since everything can be done
+//in one shader with one draw call. Shadows require the use of multiple draw calls.
+
 GLuint createShaderProgram(const std::string& vpath, const std::string& fpath);
 
 int main()
@@ -77,12 +85,12 @@ int main()
     // SCENE VAO STUFF -------------------------------------
     float verts[] = {
         //pos           //tc
-        -1.0f, -1.0f,   0.15f, 0.0f,
-         1.0f, -1.0f,   0.85f, 0.0f,
-        -1.0f,  1.0f,   0.15f, 1.0f,
-        -1.0f,  1.0f,   0.15f, 1.0f,
-         1.0f, -1.0f,   0.85f, 0.0f,
-         1.0f,  1.0f,   0.85f, 1.0f
+        -1.0f, -1.0f,   0.0f, 0.0f,
+         1.0f, -1.0f,   1.0f, 0.0f,
+        -1.0f,  1.0f,   0.0f, 1.0f,
+        -1.0f,  1.0f,   0.0f, 1.0f,
+         1.0f, -1.0f,   1.0f, 0.0f,
+         1.0f,  1.0f,   1.0f, 1.0f
     };
 
     GLuint scene_vao, scene_vbo;
@@ -159,30 +167,12 @@ int main()
         return -1;
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    float light_fbo_verts[] = {
-        //pos           //uv 
-        -1.0f, -1.0f,   0.0f, 0.0f,
-         1.0f, -1.0f,   1.0f, 0.0f,
-        -1.0f,  1.0f,   0.0f, 1.0f,
-        -1.0f,  1.0f,   0.0f, 1.0f,
-         1.0f, -1.0f,   1.0f, 0.0f,
-         1.0f,  1.0f,   1.0f, 1.0f,
-    };
-
-    GLuint light_fbo_vao, light_fbo_vbo;
-    glGenVertexArrays(1, &light_fbo_vao);
-    glBindVertexArray(light_fbo_vao);
-
-    glGenBuffers(1, &light_fbo_vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, light_fbo_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(light_fbo_verts), light_fbo_verts, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0); //pos
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(sizeof(float)*2));
-    glEnableVertexAttribArray(1); //uv
 
     //-----------------------------------------------
+
+    glUseProgram(sceneProgram);
+    glUniform1i(glGetUniformLocation(sceneProgram, "stone_tex"), 0);
+    glUniform1i(glGetUniformLocation(sceneProgram, "light_tex"), 1);
 
     bool show_demo_window = true;
 	while (!glfwWindowShouldClose(window))
@@ -228,8 +218,11 @@ int main()
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glBindVertexArray(light_fbo_vao);
-        glUseProgram(lightFboProgram);
+        glBindVertexArray(scene_vao);
+        glUseProgram(sceneProgram);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, stone_tex);
+        glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, light_tex);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 

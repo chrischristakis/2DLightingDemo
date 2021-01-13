@@ -47,8 +47,6 @@
     <None Include="shaders\scene.frag" />
     <None Include="shaders\light.vert" />
     <None Include="shaders\light.frag" />
-    <None Include="shaders\framebuffer.vert" />
-    <None Include="shaders\framebuffer.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stb_image.h">

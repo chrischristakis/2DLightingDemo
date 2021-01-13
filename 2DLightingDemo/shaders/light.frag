@@ -8,7 +8,7 @@ uniform int light_radius;
 void main() 
 {
 	float distance = length(lightPos - gl_FragCoord.xy);
-	//float attenuation = light_radius * 1.0 / (1 + lin_const*distance + quad_const*pow(distance, 2));
+	//float attenuation = light_radius * 1.0 / (1 + 0.0025*distance + 0.03*pow(distance, 2));
 	float attenuation = smoothstep(light_radius, 0, distance);
 	fragCol = vec4(1.0, 1.0, 1.0, attenuation) * lightColor;
 }
