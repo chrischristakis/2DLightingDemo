@@ -1,6 +1,6 @@
 # 2DLightingDemo
 The goal of this project is to host multiple point lights in a space to illuminate a texture and have shadows.
-<img src="2DLightingDemoassets/demo.PNG" width="500"/>
+<img src="2DLightingDemo/assets/demo.PNG" width="500"/>
 
 Currently, the light is controlled using sliders on a side panel, and you can adjust the radius of the light.
 I still need to add:
