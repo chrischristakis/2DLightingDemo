@@ -1,4 +1,4 @@
-# 2DLightingDemo
+# 2DLightingDemo (WORK IN PROGESS)
 The goal of this project is to host multiple point lights in a space to illuminate a texture and have shadows.
 <img src="2DLightingDemo/assets/demo.PNG" width="500"/>
 
