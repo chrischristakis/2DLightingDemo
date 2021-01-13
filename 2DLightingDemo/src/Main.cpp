@@ -25,6 +25,8 @@ static int w_width = 900, w_height = 900;
 //complicated if shadows are added. If there are no shadows, then clearly it would be easy to add since everything can be done
 //in one shader with one draw call. Shadows require the use of multiple draw calls.
 
+//To add: shadows, mouse lights.
+
 GLuint createShaderProgram(const std::string& vpath, const std::string& fpath);
 
 int main()
@@ -205,6 +207,11 @@ int main()
         glUseProgram(lightProgram);
         glUniform4f(locations["lightColor"], 0.0, 0.0, 1.0, 1);
         glUniform2f(locations["lightPos"], light_x, light_y);
+        glUniform1i(locations["light_radius"], light_radius);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        
+        glUniform4f(locations["lightColor"], 0.0, 1.0, 0.0, 1);
+        glUniform2f(locations["lightPos"], 200, 600);
         glUniform1i(locations["light_radius"], light_radius);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
